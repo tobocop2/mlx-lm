@@ -1,0 +1,70 @@
+name: Model test
+
+# Lives on the fork branch ci/model-test only, never on an item branch.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Fork ref (branch or sha) under test
+        required: true
+      item:
+        description: Item id, the acceptance script is acceptance/<item>.sh
+        required: true
+        default: mlx-lm-2032
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    name: Acceptance
+    runs-on: macos-15
+    timeout-minutes: 240
+    steps:
+      - name: Checkout harness (ci/model-test)
+        uses: actions/checkout@v7
+      - name: Checkout ref under test
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+          path: src
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: false
+          quiet: true
+      - name: Revision under test
+        working-directory: src
+        run: git rev-parse HEAD
+      - name: Install
+        working-directory: src
+        run: |
+          uv venv --python 3.11
+          uv pip install -e '.[test]'
+          command -v curl
+      - name: Run acceptance script
+        env:
+          ITEM: ${{ inputs.item }}
+          SRC: src
+          OUT: ${{ github.workspace }}/acceptance-out
+          HF_HOME: ${{ github.workspace }}/hf-home
+          METAL_DEVICE_WRAPPER_TYPE: 1
+          METAL_DEBUG_ERROR_MODE: 0
+        run: |
+          set +e
+          bash "acceptance/${ITEM}.sh" > acceptance.log 2>&1
+          rc=$?
+          echo "acceptance exit code: $rc"
+          grep -E '^(CELLS|RESULT|SUMMARY|RED-IDS|LEFTOVER-SERVERS|ACCEPTANCE-DONE)' acceptance.log
+          echo "$rc" > exit-code.txt
+          exit "$rc"
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-${{ inputs.item }}
+          path: |
+            acceptance.log
+            exit-code.txt
+            acceptance-out/*.log
+          if-no-files-found: warn
