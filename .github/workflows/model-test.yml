@@ -46,7 +46,30 @@ jobs:
           uv venv --python 3.11
           uv pip install -e '.[test]'
           command -v curl
+      - name: Unit tests (item unittest runs the suite, unittest-server only tests/test_server.py)
+        if: startsWith(inputs.item, 'unittest')
+        working-directory: src
+        env:
+          ITEM: ${{ inputs.item }}
+          HF_HOME: .
+          METAL_DEVICE_WRAPPER_TYPE: 1
+          METAL_DEBUG_ERROR_MODE: 0
+        run: |
+          curl -s -o test_data.zip -L https://github.com/ml-explore/mlx-lm/releases/download/test_data/test_data.zip
+          unzip -q test_data.zip
+          set +e
+          if [ "$ITEM" = "unittest-server" ]; then
+            uv run python -m unittest discover -v -s tests -p test_server.py > ../unittest.log 2>&1
+          else
+            uv run python -m unittest discover -v tests > ../unittest.log 2>&1
+          fi
+          rc=$?
+          echo "unittest exit code: $rc"
+          grep -E '^(Ran [0-9]+ tests|OK|FAILED|ERROR:|FAIL:)' ../unittest.log
+          echo "UNITTEST-DONE rc=$rc"
+          exit "$rc"
       - name: Run acceptance script
+        if: ${{ !startsWith(inputs.item, 'unittest') }}
         env:
           ITEM: ${{ inputs.item }}
           SRC: src
@@ -69,6 +92,7 @@ jobs:
           name: acceptance-${{ inputs.item }}
           path: |
             acceptance.log
+            unittest.log
             exit-code.txt
             acceptance-out/*.log
           if-no-files-found: warn
