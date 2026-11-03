@@ -2,6 +2,9 @@ name: Model test
 
 # Lives on the fork branch ci/model-test only, never on an item branch.
 on:
+  push:
+    branches:
+      - ci/model-test
   workflow_dispatch:
     inputs:
       ref:
@@ -18,6 +21,7 @@ permissions:
 jobs:
   acceptance:
     name: Acceptance
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-15
     timeout-minutes: 240
     steps:
