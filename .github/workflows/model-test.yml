@@ -87,7 +87,7 @@ jobs:
           bash "acceptance/${ITEM}.sh" > acceptance.log 2>&1
           rc=$?
           echo "acceptance exit code: $rc"
-          grep -E '^(CELLS|RESULT|SUMMARY|RED-IDS|LEFTOVER-SERVERS|ACCEPTANCE-DONE)' acceptance.log
+          grep -E '^(CELLS|RESULT|SUMMARY|RED-IDS|LEFTOVER-SERVERS|ACCEPTANCE-DONE|ARM|RESTORED|STEP_RESULT|FLAKE|REVIEW|  RED |    [0-9]+ (FAIL|ERROR))' acceptance.log
           echo "$rc" > exit-code.txt
           exit "$rc"
       - name: Upload logs
