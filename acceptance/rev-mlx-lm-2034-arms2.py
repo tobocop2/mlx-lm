@@ -149,6 +149,9 @@ arm2("A43-mscale-formula", "apply_yarn_mscale returns scale * s",
 arm2("A44-init-rope-ignores-type", "initialize_rope ignores the legacy type key (base-equal behaviour broken)",
     'return scaling_config.get("type") or scaling_config.get("rope_type", "default")', 'return scaling_config.get("rope_type", "default")', ROPE, ("tests/test_models.py", ["-k", "test_rope"]))
 
+arm2("A45-helper-ignores-type-models", "get_rope_type ignores the legacy type key, whole tests/test_models.py",
+    'return scaling_config.get("type") or scaling_config.get("rope_type", "default")', 'return scaling_config.get("rope_type", "default")', ROPE, ("tests/test_models.py", []))
+
 
 def apply(text, old, new, count):
     assert text.count(old) == count, f"pattern count {text.count(old)} != {count}: {old[:60]!r}"
