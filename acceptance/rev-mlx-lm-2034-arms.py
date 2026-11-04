@@ -113,6 +113,17 @@ arm("A31-float-accepted", "float accepted as a limit",
 arm("A32-negative-accepted", "negative accepted as a limit",
     'isinstance(limit, int) and not isinstance(limit, bool) and limit > 0', 'isinstance(limit, int) and not isinstance(limit, bool)')
 
+arm("A33-limit-key-wrong", "reader looks up the wrong key",
+    'limit = section.get("max_position_embeddings")', 'limit = section.get("max_position_embedding")')
+arm("A34-handler-catches-all-400", "every generation error answers 400",
+    'except PromptTooLongError as e:\n            self._set_completion_headers(400)',
+    'except Exception as e:\n            self._set_completion_headers(400)')
+arm("A35-max-tokens-counted", "batch call counts prompt plus max_tokens",
+    '                        self._check_prompt_length(prompt)\n                    except Exception as e:',
+    '                        self._check_prompt_length(list(prompt) + [0] * args.max_tokens)\n                    except Exception as e:')
+arm("A36-limit-minus-two", "limit lowered by two",
+    'len(prompt) > limit:', 'len(prompt) > limit - 2:')
+
 
 def apply(text, old, new, count):
     assert text.count(old) == count, f"pattern count {text.count(old)} != {count}: {old[:60]!r}"
