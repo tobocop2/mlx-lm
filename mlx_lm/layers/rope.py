@@ -13,7 +13,6 @@ __all__ = [
     "SuScaledRoPE",
     "YarnRoPE",
     "apply_yarn_mscale",
-    "get_rope_type",
     "initialize_rope",
 ]
 
@@ -293,19 +292,13 @@ def apply_yarn_mscale(scale: float, scaling_config: Optional[dict]) -> float:
     """
     if not scaling_config:
         return scale
-    rope_type = get_rope_type(scaling_config)
+    rope_type = scaling_config.get("type") or scaling_config.get("rope_type", "default")
     mscale_all_dim = scaling_config.get("mscale_all_dim", 0)
     factor = scaling_config.get("factor", 1)
     if rope_type == "default" or not mscale_all_dim or factor <= 1:
         return scale
     s = 0.1 * mscale_all_dim * math.log(factor) + 1.0
     return scale * s * s
-
-
-def get_rope_type(scaling_config: Optional[dict]) -> str:
-    if scaling_config is None:
-        return "default"
-    return scaling_config.get("type") or scaling_config.get("rope_type", "default")
 
 
 def initialize_rope(
@@ -315,7 +308,12 @@ def initialize_rope(
     scaling_config: Optional[dict] = None,
     max_position_embeddings: Optional[int] = None,
 ):
-    rope_type = get_rope_type(scaling_config)
+    if scaling_config is not None:
+        rope_type = scaling_config.get("type") or scaling_config.get(
+            "rope_type", "default"
+        )
+    else:
+        rope_type = "default"
 
     if rope_type in ["default", "linear"]:
         scale = 1 / scaling_config["factor"] if rope_type == "linear" else 1.0
