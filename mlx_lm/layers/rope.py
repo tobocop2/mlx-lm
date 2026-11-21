@@ -303,8 +303,6 @@ def apply_yarn_mscale(scale: float, scaling_config: Optional[dict]) -> float:
 
 
 def get_rope_type(scaling_config: Optional[dict]) -> str:
-    if scaling_config is None:
-        return "default"
     return scaling_config.get("type") or scaling_config.get("rope_type", "default")
 
 
